@@ -24,17 +24,17 @@ export default function Home() {
   useEffect(() => { fetchLogs(); }, []);
 
   async function fetchLogs() {
+    // 🛡️ 복잡한 다중 정렬을 빼고, 가장 기본인 '날짜' 정렬 하나만 남겨서 오류를 원천 차단했습니다!
     const { data } = await supabase
       .from('logs')
       .select('*')
-      .order('date', { ascending: false })
-      .order('time', { ascending: false }); // 시간순 정렬 추가
+      .order('date', { ascending: false });
     
     if (data) setLogs(data);
   }
 
   const insight = useMemo(() => {
-    if (logs.length === 0) return { bestDevice: '-', mvpCasting: '-', successRate: 0, alertMsg: "첫 기록을 남기고 전략을 세워보세요!" };
+    if (logs.length === 0) return { bestDevice: '-', mvpCasting: '-', successRate: 0, alertMsg: "첫 기록을 남겨보세요!" };
     
     const upcoming = logs
       .filter(l => l.is_success === '티켓팅예정' && new Date(l.date) >= new Date())
@@ -45,7 +45,7 @@ export default function Home() {
       const targetDate = new Date(upcoming[0].date);
       const diffTime = targetDate.getTime() - new Date().getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      alertMsg = `🔥 [D-${diffDays}] ${upcoming[0].performance} (${upcoming[0].time}) 티켓팅 준비!`;
+      alertMsg = `🔥 [D-${diffDays}] ${upcoming[0].performance} 티켓팅 준비!`;
     }
 
     const successLogs = logs.filter(l => l.is_success === '성공');
@@ -85,7 +85,7 @@ export default function Home() {
       seat: log.seat || '',
       rating: log.rating || '⭐⭐⭐⭐⭐',
       date: log.date || new Date().toISOString().split('T')[0],
-      time: log.time || '19:30', // 👈 기존 시간 불러오기!
+      time: log.time || '19:30', 
       device: log.device || 'PC',
       is_success: log.is_success || '성공',
       image_url: log.image_url || ''
@@ -141,7 +141,7 @@ export default function Home() {
           <h1 className="text-4xl font-[1000] text-slate-900 tracking-tighter italic uppercase leading-none">
             Stage<span className="text-indigo-600">Log</span>
           </h1>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-2 ml-1">Time Fixed Edition</p>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-2 ml-1 italic">Stable Final Edition</p>
         </div>
         <button onClick={() => setShowModal(true)} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-600 transition-all shadow-xl text-sm">LOG RESULT</button>
       </header>
@@ -174,9 +174,8 @@ export default function Home() {
                 <h4 className="text-xl font-black text-slate-800 mb-4 truncate">{log.performance}</h4>
                 <div className="flex justify-between items-center pt-5 border-t border-slate-50">
                   <div className="flex flex-col">
-                    {/* 🕒 여기 수정! DB에서 가져온 시간을 날짜 옆에 확실히 보여줍니다 */}
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                      {log.date} {log.time ? log.time : ''}
+                      {log.date} {log.time || ''}
                     </span>
                     <span className="text-[10px] font-black text-slate-800 truncate max-w-[120px]">
                       {log.is_success === '성공' ? log.seat : (log.is_success === '티켓팅예정' ? 'UPCOMING' : 'FAILED')}
@@ -194,8 +193,8 @@ export default function Home() {
       </main>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-lg rounded-[3.5rem] p-10 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-[3.5rem] p-10 shadow-2xl animate-in fade-in zoom-in duration-300 my-auto">
             <h3 className="text-3xl font-black mb-8 text-slate-800 tracking-tighter italic uppercase">Update Log</h3>
             
             <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
@@ -210,25 +209,19 @@ export default function Home() {
                 <input type="text" className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm" placeholder="배우" value={formData.casting} onChange={(e) => setFormData({...formData, casting: e.target.value})} />
               </div>
               <input type="text" className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm" placeholder="좌석 상세 또는 메모" value={formData.seat} onChange={(e) => setFormData({...formData, seat: e.target.value})} />
-              
               <div className="p-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 text-center relative group">
                 <p className="text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest">Image Source</p>
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="text-[10px] w-full" />
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="text-[10px] w-full cursor-pointer" />
                 {formData.image_url && <div className="mt-2 text-emerald-500 font-black text-[10px]">✅ ATTACHED</div>}
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-tighter">Date</label>
                   <input type="date" className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-tighter">Time Dropdown</label>
-                  <select 
-                    className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm appearance-none" 
-                    value={formData.time} 
-                    onChange={(e) => setFormData({...formData, time: e.target.value})}
-                  >
+                  <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-tighter">Time</label>
+                  <select className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm" value={formData.time} onChange={(e) => setFormData({...formData, time: e.target.value})}>
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
@@ -236,7 +229,7 @@ export default function Home() {
             </div>
 
             <div className="flex space-x-4 mt-10">
-              <button onClick={closeModal} className="flex-1 py-5 bg-slate-50 text-slate-300 rounded-[1.5rem] font-black text-xs uppercase">Cancel</button>
+              <button onClick={closeModal} className="flex-1 py-5 bg-slate-50 text-slate-300 rounded-[1.5rem] font-black text-xs uppercase hover:bg-slate-100 transition-all">Cancel</button>
               <button onClick={handleSave} disabled={uploading} className={`flex-1 py-5 text-white rounded-[1.5rem] font-black shadow-xl transition-all text-xs uppercase ${formData.is_success === '성공' ? 'bg-emerald-600' : formData.is_success === '실패' ? 'bg-rose-500' : 'bg-indigo-600'}`}>
                 {editingId ? 'Update' : 'Save'}
               </button>
@@ -245,7 +238,7 @@ export default function Home() {
         </div>
       )}
       <style jsx global>{`
-        @keyframes pulse-subtle { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.01); opacity: 0.95; } }
+        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
         .animate-pulse-subtle { animation: pulse-subtle 4s infinite ease-in-out; }
       `}</style>
     </div>
