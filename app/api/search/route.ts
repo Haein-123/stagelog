@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     // 네이버 이미지 API 결과(link)를 프론트엔드 image_url 형식에 맞춤
     const formattedItems = data.items?.map((item: any) => ({
       title: item.title.replace(/<[^>]*>?/gm, ''),
-      thumbnail: item.link 
+      thumbnail: item.thumbnail 
     })) || [];
 
     return NextResponse.json({ items: formattedItems });
